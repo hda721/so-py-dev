@@ -19,18 +19,30 @@ jobs:
         with:
           submodules: true
           lfs: false
+
+      # Install dependencies
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      # Deploy to Azure Static Web Apps
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_STONE_0D4E4C603 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (i.e. PR comments)
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          # --- SWA config ---
-          app_location: "/"     # where index.html & package.json live
-          api_location: ""      # no APIs
-          output_location: "dist"  # <-- Vite build output
-          # -------------------
+          app_location: "/" 
+          api_location: ""
+          output_location: "dist"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
