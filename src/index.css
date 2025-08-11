@@ -61,3 +61,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a29e;
 }
+
+a {
+  outline: none;
+}
+
+a:focus {
+  outline: none;
+  box-shadow: none;
+}
