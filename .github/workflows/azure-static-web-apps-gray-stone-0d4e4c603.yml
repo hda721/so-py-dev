@@ -2,55 +2,53 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  build_and_deploy_job:
+  build_and_deploy:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
           lfs: false
 
-      # Install dependencies
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install & Build (Vite)
+        env:
+          # Gör dessa secrets i GitHub: Settings → Secrets and variables → Actions → New repository secret
+          VITE_SUPABASE_URL:  ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # lägg gärna fler VITE_* här om du behöver
+        run: |
+          npm ci
+          npm run build
 
-      - name: Build project
-        run: npm run build
-
-      # Deploy to Azure Static Web Apps
-      - name: Build And Deploy
-        id: builddeploy
+      - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_STONE_0D4E4C603 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/" 
-          api_location: ""
-          output_location: "dist"
+          # Vi har redan byggt, så ladda upp build-mappen direkt
+          skip_app_build: true
+          app_location: "dist"   # var den färdiga sajten ligger (Vite output)
 
-  close_pull_request_job:
+  close_pr:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
     steps:
-      - name: Close Pull Request
-        id: closepullrequest
+      - name: Close PR
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_STONE_0D4E4C603 }}
